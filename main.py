@@ -17,9 +17,6 @@ label = [
 gg = Neural(2, [6], 1, .4)
 for value in range(1000):
     index = random.randint(0, 3)
-    gg.train([data[index]], label[index])
+    gg.train(data[index], label[index])
 
-print(gg.feedforward(data[0]))
-print(gg.feedforward(data[1]))
-print(gg.feedforward(data[2]))
-print(gg.feedforward(data[3]))
+print(gg.feedforward(data,label))
