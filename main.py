@@ -14,10 +14,10 @@ label = [
     [1],
     [1]
 ]
-gg = Neural(2, [6], 5, .4)
+gg = Neural(2, [6], 1, .4)
 for value in range(1000):
     index = random.randint(0, 3)
-    gg.train([1,1], [1,.75,.5,.25,0])
+    gg.train([data[index]], label[index])
 
 print(gg.feedforward(data[0]))
 print(gg.feedforward(data[1]))
