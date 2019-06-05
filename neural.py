@@ -6,148 +6,124 @@ from matrix import *
 class Neural:
     def __init__(self, x, y, z, lr=0.055):
         self.inputNum = x
-        self.hiddenNum = len(y)
+        self.hiddenNum = y
         self.outputNum = z
+        self.hiddenLayer = len(y)
         self.lr = lr
         self.weights = []
         self.bias = []
-        for tt in range(self.hiddenNum + 1):
+        for tt in range(self.hiddenLayer + 1):
             if tt == 0:
                 self.weights.append(Matrix(y[0], self.inputNum))
-            elif tt == self.hiddenNum:
+            elif tt == self.hiddenLayer:
                 self.weights.append(Matrix(self.outputNum, y[-1]))
             else:
                 self.weights.append(Matrix(y[tt], y[tt - 1]))
             self.weights[tt].randomize()
-        for tt in range(self.hiddenNum + 1):
-            if tt == self.hiddenNum:
+        for tt in range(self.hiddenLayer + 1):
+            if tt == self.hiddenLayer:
                 self.bias.append(Matrix(z, 1))
             else:
                 self.bias.append(Matrix(y[tt], 1))
             self.bias[tt].randomize()
 
-    def feedforward(self, xy, bunch=False):
-        if bunch == False:
-            inpp = Matrix.fromArray(xy)
+    def feedforward(self, data, isBatch=False):
+        if not(isBatch):
+            sumi = Matrix.fromArray(data)
             for tt in range(len(self.weights)):
-                sum = Matrix.dotProductt(self.weights[tt], inpp)
-                sum.add(self.bias[tt])
-                sum.map(sigmoid)
-                inpp = sum
-            return inpp.toArray()
+                sumi = Matrix.dotProduct(self.weights[tt], sumi)
+                sumi.add(self.bias[tt])
+                sumi.map(sigmoid)
+                # target = sumi
+            return sumi.toArray()
         else:
-            output = []
-            for value in xy:
-                inpp = Matrix.fromArray(value)
+            output = np.array([])
+            for value in data:
+                sumi = Matrix.fromArray(value)
                 for tt in range(len(self.weights)):
-                    sum = Matrix.dotProductt(self.weights[tt], inpp)
-                    sum.add(self.bias[tt])
-                    sum.map(sigmoid)
-                    inpp = sum
-                output.append(inpp.toArray())
-            return output
+                    sumi = Matrix.dotProduct(self.weights[tt], sumi)
+                    sumi.add(self.bias[tt])
+                    sumi.map(sigmoid)
+                    # target = sumi
+                output = np.append(output, sumi.toArray())
+            return output.reshape(len(data), self.outputNum)
 
-    def train(self, data, label, bunch=False):
-        if bunch == False:
+    def train(self, data, label, isBatch=False):
+        if not(isBatch):
             info = Matrix.fromArray(data)
             lab = Matrix.fromArray(label)
-            sum_l = np.array([info])
+            sum_l = [info]
             for value in range(len(self.weights)):
-                sum_l[value] = Matrix.dotProductt(
+                sum_l[value] = Matrix.dotProduct(
                     self.weights[value], sum_l[value])
                 sum_l[value].add(self.bias[value])
                 sum_l[value].map(sigmoid)
-                sum_l = np.append(sum_l, sum_l[value])
-            sum_l = np.delete(sum_l, -1)
-            output_error = Matrix.sub(lab, sum_l[-1])
+                sum_l.append(sum_l[value])
+            sum_l.remove(sum_l[-1])
+            output_error = Matrix.sub(sum_l[-1], lab)
             err_tab = []
             for value in range(len(self.weights) - 1, -1, -1):
                 if value == len(self.weights) - 1:
-                    err_tab.append(Matrix.dotProductt(
+                    err_tab.append(Matrix.dotProduct(
                         self.weights[value].transpose(), output_error))
                 else:
-                    err_tab.append(Matrix.dotProductt(
+                    err_tab.append(Matrix.dotProduct(
                         self.weights[value].transpose(), err_tab[-1]))
             err_tab = err_tab[::-1]
-            gradient = []
-            deltaw = []
+            err_tab.append(output_error)
             for value in range(len(self.weights)):
+                gradient = Matrix.Smap(sum_l[value], Dsigmoid)
+                gradient = Matrix.multElement(
+                    gradient, err_tab[value + 1])
+                gradient.matrox *= self.lr
                 if value == 0:
-                    gradient.append(Matrix.mapp(sum_l[value], Dsigmoid))
-                    gradient[value] = Matrix.multElement(
-                        gradient[value], err_tab[value + 1])
-                    gradient[value].matrox *= self.lr
-                    self.bias[value].add(gradient[value])
-                    deltaw.append(Matrix.dotProductt(
-                        gradient[value], Matrix.transpose(info)))
-                elif value == len(self.weights) - 1:
-                    gradient.append(Matrix.mapp(sum_l[value], Dsigmoid))
-                    gradient[value] = Matrix.multElement(
-                        gradient[value], output_error)
-                    gradient[value].matrox *= self.lr
-                    self.bias[value].add(gradient[value])
-                    deltaw.append(Matrix.dotProductt(
-                        gradient[value], Matrix.transpose(sum_l[value - 1])))
+                    deltaw = Matrix.dotProduct(
+                        gradient, info.transpose())
                 else:
-                    gradient.append(Matrix.mapp(sum_l[value], Dsigmoid))
-                    gradient[value] = Matrix.multElement(
-                        gradient[value], err_tab[value + 1])
-                    gradient[value].matrox *= self.lr
-                    self.bias[value].add(gradient[value])
-                    deltaw.append(Matrix.dotProductt(
-                        gradient[value], Matrix.transpose(sum_l[value - 1])))
-                self.weights[value].add(deltaw[value])
+                    deltaw = Matrix.dotProduct(
+                        gradient, sum_l[value - 1].transpose())
+                self.bias[value].add(gradient)
+                self.weights[value].add(deltaw)
 
         else:
-            for value in range(len(data)):
-                info = Matrix.fromArray(data[value])
-                lab = Matrix.fromArray(label[value])
-                sum_l = np.array([info])
+            for value1 in range(len(data)):
+                info = Matrix.fromArray(data[value1])
+                lab = Matrix.fromArray(label[value1])
+                sum_l = [info]
                 for value in range(len(self.weights)):
-                    sum_l[value] = Matrix.dotProductt(
+                    sum_l[value] = Matrix.dotProduct(
                         self.weights[value], sum_l[value])
                     sum_l[value].add(self.bias[value])
                     sum_l[value].map(sigmoid)
-                    sum_l = np.append(sum_l, sum_l[value])
-                sum_l = np.delete(sum_l, -1)
-                output_error = Matrix.sub(lab, sum_l[-1])
+                    sum_l.append(sum_l[value])
+                sum_l.remove(sum_l[-1])
+                output_error = Matrix.sub(sum_l[-1], lab)
                 err_tab = []
                 for value in range(len(self.weights) - 1, -1, -1):
                     if value == len(self.weights) - 1:
-                        err_tab.append(Matrix.dotProductt(
+                        err_tab.append(Matrix.dotProduct(
                             self.weights[value].transpose(), output_error))
                     else:
-                        err_tab.append(Matrix.dotProductt(
+                        err_tab.append(Matrix.dotProduct(
                             self.weights[value].transpose(), err_tab[-1]))
                 err_tab = err_tab[::-1]
-                gradient = []
-                deltaw = []
+                err_tab.append(output_error)
                 for value in range(len(self.weights)):
+                    gradient = Matrix.Smap(sum_l[value], Dsigmoid)
+                    gradient = Matrix.multElement(
+                        gradient, err_tab[value + 1])
+                    gradient.matrox *= self.lr
                     if value == 0:
-                        gradient.append(Matrix.mapp(sum_l[value], Dsigmoid))
-                        gradient[value] = Matrix.multElement(
-                            gradient[value], err_tab[value + 1])
-                        gradient[value].matrox *= self.lr
-                        self.bias[value].add(gradient[value])
-                        deltaw.append(Matrix.dotProductt(
-                            gradient[value], Matrix.transpose(info)))
-                    elif value == len(self.weights) - 1:
-                        gradient.append(Matrix.mapp(sum_l[value], Dsigmoid))
-                        gradient[value] = Matrix.multElement(
-                            gradient[value], output_error)
-                        gradient[value].matrox *= self.lr
-                        self.bias[value].add(gradient[value])
-                        deltaw.append(Matrix.dotProductt(
-                            gradient[value], Matrix.transpose(sum_l[value - 1])))
+                        deltaw = Matrix.dotProduct(
+                            gradient, info.transpose())
                     else:
-                        gradient.append(Matrix.mapp(sum_l[value], Dsigmoid))
-                        gradient[value] = Matrix.multElement(
-                            gradient[value], err_tab[value + 1])
-                        gradient[value].matrox *= self.lr
-                        self.bias[value].add(gradient[value])
-                        deltaw.append(Matrix.dotProductt(
-                            gradient[value], Matrix.transpose(sum_l[value - 1])))
-                    self.weights[value].add(deltaw[value])
+                        deltaw = Matrix.dotProduct(
+                            gradient, sum_l[value - 1].transpose())
+                    self.bias[value].add(gradient)
+                    self.weights[value].add(deltaw)
+
+            print("loss: " + str(abs(np.array(label) -
+                                     np.array(self.feedforward(data, True))).sum() / self.outputNum))
 
 
 def sigmoid(x):
