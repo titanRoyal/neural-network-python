@@ -85,7 +85,7 @@ class Neural:
             self.weights[value].add(deltaw)
 
     def train_batch(self, data, label, howmany=1):
-        history=[]
+        history = []
         for i in range(howmany):
             for value1 in range(len(data)):
                 info = Matrix.fromArray(data[value1])
@@ -123,8 +123,8 @@ class Neural:
                     self.bias[value].add(gradient)
                     self.weights[value].add(deltaw)
             history.append([abs(np.copy(label) -
-                               np.copy(self.feedforward(data, True))).sum() / self.outputNum])
-        return np.array(history).reshape(len(history),1)
+                                np.copy(self.feedforward(data, True))).sum() / self.outputNum])
+        return np.array(history).reshape(len(history), 1)
 
 
 def sigmoid(x):
@@ -132,4 +132,4 @@ def sigmoid(x):
 
 
 def Dsigmoid(x):
-    return x
+    return x * (1 - x)
