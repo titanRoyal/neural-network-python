@@ -13,10 +13,13 @@ label = [
     [0],
     [1]
 ]
-# Fiting the model
+#Creating the Model
 model = Neural(2, [10], 1, .3)
-# Print the history of loss
+
+# Fiting the model
 log = model.train_batch(data, label, 3000)
+# Print the history of loss
+
 print(log)
 # Geting the new prediction from the trained neural network
 print(model.feedforward(data, True))
