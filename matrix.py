@@ -23,7 +23,7 @@ class Matrix:
             self.matrox += mat.matrox
         else:
             print("not compatible")
-
+            np.append()
     def map(self, func):
         for x in range(self.row):
             for y in range(self.col):
@@ -41,9 +41,9 @@ class Matrix:
 
     @staticmethod
     def fromArray(arr):
-        inppp = np.array(arr)
-        tab = inppp.reshape(len(arr), 1)
-        inppp = Matrix(len(arr), 1)
+        inppp = np.copy(arr).flatten()
+        tab = inppp.reshape(inppp.shape[0], 1)
+        inppp = Matrix(inppp.shape[0], 1)
         inppp.matrox = tab
         return inppp
 

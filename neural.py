@@ -37,7 +37,7 @@ class Neural:
                 # target = sumi
             return sumi.toArray()
         else:
-            output = np.array([])
+            output = np.copy([])
             for value in data:
                 sumi = Matrix.fromArray(value)
                 for tt in range(len(self.weights)):
@@ -60,7 +60,7 @@ class Neural:
                 sum_l[value].map(sigmoid)
                 sum_l.append(sum_l[value])
             sum_l.remove(sum_l[-1])
-            output_error = Matrix.sub(sum_l[-1], lab)
+            output_error = Matrix.sub(lab, sum_l[-1])
             err_tab = []
             for value in range(len(self.weights) - 1, -1, -1):
                 if value == len(self.weights) - 1:
@@ -97,7 +97,7 @@ class Neural:
                     sum_l[value].map(sigmoid)
                     sum_l.append(sum_l[value])
                 sum_l.remove(sum_l[-1])
-                output_error = Matrix.sub(sum_l[-1], lab)
+                output_error = Matrix.sub(lab, sum_l[-1])
                 err_tab = []
                 for value in range(len(self.weights) - 1, -1, -1):
                     if value == len(self.weights) - 1:
@@ -122,13 +122,13 @@ class Neural:
                     self.bias[value].add(gradient)
                     self.weights[value].add(deltaw)
 
-            print("loss: " + str(abs(np.array(label) -
-                                     np.array(self.feedforward(data, True))).sum() / self.outputNum))
+            print("loss: " + str(abs(np.copy(label) -
+                                     np.copy(self.feedforward(data, True))).sum() / self.outputNum))
 
 
 def sigmoid(x):
-    return 1 / (1 + math.exp(x))
+    return 1 / (1 + math.exp(-x))
 
 
 def Dsigmoid(x):
-    return x * (1 - x)
+    return x
