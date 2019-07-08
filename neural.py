@@ -48,44 +48,45 @@ class Neural:
                 output = np.append(output, sumi.toArray())
             return output.reshape(len(data), self.outputNum)
 
-    def train(self, data, label, isBatch=False):
-        if not(isBatch):
-            info = Matrix.fromArray(data)
-            lab = Matrix.fromArray(label)
-            sum_l = [info]
-            for value in range(len(self.weights)):
-                sum_l[value] = Matrix.dotProduct(
-                    self.weights[value], sum_l[value])
-                sum_l[value].add(self.bias[value])
-                sum_l[value].map(sigmoid)
-                sum_l.append(sum_l[value])
-            sum_l.remove(sum_l[-1])
-            output_error = Matrix.sub(lab, sum_l[-1])
-            err_tab = []
-            for value in range(len(self.weights) - 1, -1, -1):
-                if value == len(self.weights) - 1:
-                    err_tab.append(Matrix.dotProduct(
-                        self.weights[value].transpose(), output_error))
-                else:
-                    err_tab.append(Matrix.dotProduct(
-                        self.weights[value].transpose(), err_tab[-1]))
-            err_tab = err_tab[::-1]
-            err_tab.append(output_error)
-            for value in range(len(self.weights)):
-                gradient = Matrix.Smap(sum_l[value], Dsigmoid)
-                gradient = Matrix.multElement(
-                    gradient, err_tab[value + 1])
-                gradient.matrox *= self.lr
-                if value == 0:
-                    deltaw = Matrix.dotProduct(
-                        gradient, info.transpose())
-                else:
-                    deltaw = Matrix.dotProduct(
-                        gradient, sum_l[value - 1].transpose())
-                self.bias[value].add(gradient)
-                self.weights[value].add(deltaw)
+    def train(self, data, label):
+        info = Matrix.fromArray(data)
+        lab = Matrix.fromArray(label)
+        sum_l = [info]
+        for value in range(len(self.weights)):
+            sum_l[value] = Matrix.dotProduct(
+                self.weights[value], sum_l[value])
+            sum_l[value].add(self.bias[value])
+            sum_l[value].map(sigmoid)
+            sum_l.append(sum_l[value])
+        sum_l.remove(sum_l[-1])
+        output_error = Matrix.sub(lab, sum_l[-1])
+        err_tab = []
+        for value in range(len(self.weights) - 1, -1, -1):
+            if value == len(self.weights) - 1:
+                err_tab.append(Matrix.dotProduct(
+                    self.weights[value].transpose(), output_error))
+            else:
+                err_tab.append(Matrix.dotProduct(
+                    self.weights[value].transpose(), err_tab[-1]))
+        err_tab = err_tab[::-1]
+        err_tab.append(output_error)
+        for value in range(len(self.weights)):
+            gradient = Matrix.Smap(sum_l[value], Dsigmoid)
+            gradient = Matrix.multElement(
+                gradient, err_tab[value + 1])
+            gradient.matrox *= self.lr
+            if value == 0:
+                deltaw = Matrix.dotProduct(
+                    gradient, info.transpose())
+            else:
+                deltaw = Matrix.dotProduct(
+                    gradient, sum_l[value - 1].transpose())
+            self.bias[value].add(gradient)
+            self.weights[value].add(deltaw)
 
-        else:
+    def train_batch(self, data, label, howmany=1):
+        history=[]
+        for i in range(howmany):
             for value1 in range(len(data)):
                 info = Matrix.fromArray(data[value1])
                 lab = Matrix.fromArray(label[value1])
@@ -121,9 +122,9 @@ class Neural:
                             gradient, sum_l[value - 1].transpose())
                     self.bias[value].add(gradient)
                     self.weights[value].add(deltaw)
-
-            print("loss: " + str(abs(np.copy(label) -
-                                     np.copy(self.feedforward(data, True))).sum() / self.outputNum))
+            history.append([abs(np.copy(label) -
+                               np.copy(self.feedforward(data, True))).sum() / self.outputNum])
+        return np.array(history).reshape(len(history),1)
 
 
 def sigmoid(x):
