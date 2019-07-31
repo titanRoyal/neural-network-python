@@ -23,7 +23,6 @@ class Matrix:
             self.matrox += mat.matrox
         else:
             print("not compatible")
-            np.append()
 
     def map(self, func):
         for x in range(self.row):
@@ -40,7 +39,7 @@ class Matrix:
             r = Matrix(tr.shape[0], tr.shape[1])
             r.matrox = tr
             return r
-        except Exception as e:
+        except :
             print("dimention are not compatible static")
 
     @staticmethod
